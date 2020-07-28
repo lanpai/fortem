@@ -6,7 +6,8 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    Image
+    Image,
+    StatusBar
 } from 'react-native';
 
 import { Svg, Path, Defs, RadialGradient, Ellipse, Stop } from 'react-native-svg';
@@ -63,7 +64,8 @@ const AccountCreation = ({ navigation }) => {
     }
 
     return (
-        <View>
+        <View style={{ backgroundColor: '#ffffff', height: '100%' }}>
+            <StatusBar backgroundColor='#ffffff' barStyle='dark-content' />
             <View
                 style={{
                     height: 60,

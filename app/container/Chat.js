@@ -17,9 +17,7 @@ const ChatOption = ({ info, navigation }) => {
     return (
         <TouchableOpacity
             style={{
-                height: 80,
-                borderColor: '#252a3440',
-                borderBottomWidth: StyleSheet.hairlineWidth,
+                height: 70,
                 alignItems: 'center',
                 flexDirection: 'row',
                 justifyContent: 'space-between',
@@ -63,6 +61,8 @@ const SAMPLE_CHAT_OPTIONS = [
         id: 5,
         name: 'Dr. John Doe, DDS',
         practice: 'Dentist',
+        description: 'Description about me here',
+        available: true,
         messages: [
             {
                 id: 1,
@@ -92,6 +92,8 @@ const SAMPLE_CHAT_OPTIONS = [
         id: 6,
         name: 'Dr. Ashley Yeon, MD',
         practice: 'Physician',
+        description: 'Ashey Yeon\'s description',
+        available: false,
         messages: [
             {
                 id: 4,
@@ -107,49 +109,34 @@ const SAMPLE_CHAT_OPTIONS = [
 
 const ChatSelect = ({ navigation }) => {
     return (
-        <ScrollView>
+        <View style={{ backgroundColor: '#ffffff', height: '100%' }}>
             <View
                 style={{
                     height: 60,
                     borderColor: '#252a3440',
+                    justifyContent: 'center',
                     borderBottomWidth: StyleSheet.hairlineWidth,
-                    alignItems: 'center',
-                    flexDirection: 'row',
                     paddingHorizontal: 15
                 }}
             >
-                <Text style={{ color: '#252a34', fontSize: 24, fontWeight: 'bold' }}>
-                    Messages
-                </Text>
-                <View
-                    style={{
-                        backgroundColor: '#ff2e63',
-                        width: 20,
-                        height: 20,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        borderRadius: 10,
-                        marginLeft: 5
-                    }}
-                >
-                    <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: 'bold' }}>
-                        { SAMPLE_CHAT_OPTIONS.reduce((accum, info) => info.read ? accum : ++accum, 0) }
+                    <Text style={{ color: '#252a34', fontSize: 24, fontWeight: 'bold', alignSelf: 'center', textAlign: 'center' }}>
+                        Open Conversations
                     </Text>
-                </View>
             </View>
-            <View>
+            <ScrollView contentContainerStyle={{ paddingVertical: 15 }}>
                 { SAMPLE_CHAT_OPTIONS.map((info) =>
                     <ChatOption key={ info.id } info={ info } navigation={ navigation } />
                 ) }
-            </View>
-        </ScrollView>
+            </ScrollView>
+        </View>
     );
 };
 
 const ChatConversation = ({ route, navigation }) => {
+    console.log(route.params);
     const { info } = route.params;
     return (
-        <View style={{ height: '100%' }}>
+        <View style={{ height: '100%', backgroundColor: '#ffffff' }}>
             <View
                 style={{
                     height: 60,
@@ -173,7 +160,7 @@ const ChatConversation = ({ route, navigation }) => {
                 <Text style={{ color: '#252a34', fontSize: 24, fontWeight: 'bold' }}>
                     { info.name }
                 </Text>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => route.params.open(info)}>
                     <Svg viewBox='0 0 24 24' style={{ height: 30, width: 30 }}>
                         <Path fill='#08d9d6' d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z' />
                     </Svg>
@@ -224,11 +211,11 @@ const ChatConversation = ({ route, navigation }) => {
     );
 };
 
-const Chat = () => {
+const Chat = ({ route }) => {
     return (
         <Stack.Navigator initialRouteName="ChatSelect" screenOptions={{ headerShown: false }}>
             <Stack.Screen name="ChatSelect" component={ ChatSelect } />
-            <Stack.Screen name="ChatConversation" component={ ChatConversation } />
+            <Stack.Screen name="ChatConversation" component={ ChatConversation } initialParams={ route.params } />
         </Stack.Navigator>
     );
 };
