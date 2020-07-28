@@ -10,9 +10,11 @@ import {
     StyleSheet
 } from 'react-native';
 
-import { Svg, Path } from 'react-native-svg';
+import { Svg, Path, Polygon } from 'react-native-svg';
 import MapView, { AnimatedRegion, Marker } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
+
+import { getDoctor, getNearby } from '../api.js';
 
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
@@ -180,33 +182,6 @@ const MAP_STYLE = [
   }
 ];
 
-const SAMPLE_NEARBY = [
-    {
-        id: 5,
-        name: 'Dr. John Doe, DDS',
-        practice: 'Dentist',
-        latitude: 34.223491,
-        longitude: -118.233499,
-        distance: 5
-    },
-    {
-        id: 10,
-        name: 'Dr. Jane Angelo, MD',
-        practice: 'Physician',
-        latitude: 34.226419,
-        longitude: -118.255429,
-        distance: 7
-    },
-    {
-        id: 14,
-        name: 'Dr. Benjamin Shah, MD',
-        practice: 'Physician',
-        latitude: 34.245724,
-        longitude: -118.249514,
-        distance: 7
-    }
-];
-
 const NearbyOption = ({ info, onGoTo, onPress }) => {
     return (
         <View
@@ -250,6 +225,7 @@ const NearbyOption = ({ info, onGoTo, onPress }) => {
 
 const Map = ({ route }) => {
     const [ region, setRegion ] = useState(null);
+    const [ doctors, setDoctors ] = useState([]);
 
     useEffect(() => {
         PermissionsAndroid.request(
@@ -263,13 +239,21 @@ const Map = ({ route }) => {
             }
         ).then((granted) => {
             if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-                Geolocation.getCurrentPosition((info) => {
+                Geolocation.getCurrentPosition(async (info) => {
                     setRegion(new AnimatedRegion({
                         latitude: info.coords.latitude,
                         longitude: info.coords.longitude,
                         latitudeDelta: LATITUDE_DELTA,
                         longitudeDelta: LONGITUDE_DELTA
                     }));
+
+                    const fetch = async () => {
+                        let nearby = await getNearby(info.coords.latitude, info.coords.longitude);
+                        setDoctors(await Promise.all(nearby.map(async (id) => {
+                            return await getDoctor(id);
+                        })));
+                    }
+                    fetch();
                 }, (err) => {
                     console.warn(err);
                 });
@@ -288,11 +272,19 @@ const Map = ({ route }) => {
                 onRegionChange={(newRegion) => region.setValue(newRegion)}
                 customMapStyle={ MAP_STYLE }
             >
-                { SAMPLE_NEARBY.map((info) =>
+                { doctors.map((info) =>
                     <Marker
                         key={ info.id }
                         coordinate={{ latitude: info.latitude, longitude: info.longitude }}
                     >
+                        <View style={{ alignItems: 'center', elevation: 8 }}>
+                            <View style={{ backgroundColor: '#08d9d6', borderRadius: 8 }}>
+                                <Text style={{ color: '#ffffff', marginVertical: 4, marginHorizontal: 6 }}>{ info.name }</Text>
+                            </View>
+                            <Svg viewBox='0 0 24 12' style={{ height: 6, width: 12 }}>
+                                <Polygon fill='#08d9d6' points='0,-1 24,-1, 12,12' />
+                            </Svg>
+                        </View>
                     </Marker>
                 ) }
             </MapView.Animated>
@@ -345,7 +337,7 @@ const Map = ({ route }) => {
                         elevation: 6
                     }}
                 >
-                    { SAMPLE_NEARBY.map((info) =>
+                    { doctors.map((info) =>
                         <NearbyOption
                             key={ info.id }
                             info={ info }

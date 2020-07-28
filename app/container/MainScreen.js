@@ -7,11 +7,14 @@ import {
     Animated,
     Text,
     StyleSheet,
-    TextInput
+    TextInput,
+    Alert
 } from 'react-native';
 
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { Svg, Path } from 'react-native-svg';
+
+import { logout } from '../api.js';
 
 import Button from '../element/Button.js';
 import Chat from './Chat.js';
@@ -39,7 +42,7 @@ const MapFilled = ({ color }) => {
 const MenuFilled = ({ color }) => {
     return (
         <Svg viewBox='0 0 24 24'>
-            <Path fill={ color } d='M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z' />
+            <Path fill={ color } d='M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z' />
         </Svg>
     );
 };
@@ -130,7 +133,19 @@ const MainScreen = ({ navigation }) => {
                     listeners={{
                         tabPress: (e) => {
                             e.preventDefault();
-                            openLogout();
+                            Alert.alert('Logout', 'Are you sure you want to logout?', [
+                                {
+                                    text: 'Cancel',
+                                    style: 'cancel'
+                                },
+                                {
+                                    text: 'Logout',
+                                    onPress: async () => {
+                                        if (await logout())
+                                            navigation.navigate('StartScreen');
+                                    }
+                                }
+                            ]);
                         }
                     }}
                 />
@@ -185,8 +200,9 @@ const MainScreen = ({ navigation }) => {
                                     Are you sure you want to log out?
                                 </Text>
                                 <Button
-                                    onPress={() => {
-                                        navigation.navigate('StartScreen');
+                                    onPress={async () => {
+                                        if (await logout())
+                                            navigation.navigate('StartScreen');
                                     }}
                                     style={{ marginTop: 5 }}
                                     title='Log out'

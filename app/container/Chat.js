@@ -1,15 +1,19 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     StyleSheet,
     ScrollView,
     View,
     Text,
     TouchableOpacity,
-    TextInput
+    TextInput,
+    Alert
 } from 'react-native';
 
 import { createStackNavigator } from '@react-navigation/stack';
 import { Svg, Path } from 'react-native-svg';
+import DocumentPicker from 'react-native-document-picker';
+
+import { getConversations, getDoctor, getMessages, sendMessage, sendFile, getID } from '../api.js';
 
 const Stack = createStackNavigator();
 
@@ -55,59 +59,22 @@ const ChatOption = ({ info, navigation }) => {
     );
 };
 
-const MY_ID = 3;
-const SAMPLE_CHAT_OPTIONS = [
-    {
-        id: 5,
-        name: 'Dr. John Doe, DDS',
-        practice: 'Dentist',
-        description: 'Description about me here',
-        available: true,
-        messages: [
-            {
-                id: 1,
-                sender: 5,
-                receiver: 3,
-                timestamp: 'July 24',
-                content: 'Make sure to floss!'
-            },
-            {
-                id: 2,
-                sender: 3,
-                receiver: 5,
-                timestamp: 'July 24',
-                content: 'Of course I have.'
-            },
-            {
-                id: 3,
-                sender: 5,
-                receiver: 3,
-                timestamp: 'July 23',
-                content: 'Have you been flossing?'
-            }
-        ],
-        read: false
-    },
-    {
-        id: 6,
-        name: 'Dr. Ashley Yeon, MD',
-        practice: 'Physician',
-        description: 'Ashey Yeon\'s description',
-        available: false,
-        messages: [
-            {
-                id: 4,
-                sender: 6,
-                receiver: 3,
-                timestamp: 'July 22',
-                content: 'Has the inflammation gone?'
-            }
-        ],
-        read: true
-    },
-];
-
 const ChatSelect = ({ navigation }) => {
+    const [ doctors, setDoctors ] = useState([]);
+
+    useEffect(() => {
+        const fetch = async () => {
+            let conversations = await getConversations();
+            setDoctors(await Promise.all(conversations.map(async (id) => {
+                return {
+                    ...await getDoctor(id),
+                    messages: await getMessages(id)
+                };
+            })));
+        }
+        fetch();
+    }, []);
+
     return (
         <View style={{ backgroundColor: '#ffffff', height: '100%' }}>
             <View
@@ -124,7 +91,7 @@ const ChatSelect = ({ navigation }) => {
                     </Text>
             </View>
             <ScrollView contentContainerStyle={{ paddingVertical: 15 }}>
-                { SAMPLE_CHAT_OPTIONS.map((info) =>
+                { doctors.map((info) =>
                     <ChatOption key={ info.id } info={ info } navigation={ navigation } />
                 ) }
             </ScrollView>
@@ -133,8 +100,35 @@ const ChatSelect = ({ navigation }) => {
 };
 
 const ChatConversation = ({ route, navigation }) => {
-    console.log(route.params);
+    const [ message, setMessage ] = useState('');
     const { info } = route.params;
+
+    const onSubmit = async () => {
+        await sendMessage(message);
+        setMessage('');
+    }
+
+    const onSelectFile = async () => {
+        try {
+            const res = await DocumentPicker.pick({
+                type: [ DocumentPicker.types.allFiles ],
+            });
+            Alert.alert('File Upload', 'Are you sure you want to upload:\n' + res.name, [
+                {
+                    text: 'Cancel',
+                    style: 'cancel'
+                },
+                {
+                    text: 'Upload',
+                    onPress: () => sendFile(res.uri)
+                }
+            ]);
+        }
+        catch (err) {
+            console.log(err);
+        }
+    }
+
     return (
         <View style={{ height: '100%', backgroundColor: '#ffffff' }}>
             <View
@@ -183,7 +177,7 @@ const ChatConversation = ({ route, navigation }) => {
                                 padding: 5,
                                 maxWidth: '70%',
                                 borderRadius: 7,
-                                alignSelf: message.sender === MY_ID ? 'flex-end' : 'flex-start'
+                                alignSelf: message.sender === getID() ? 'flex-end' : 'flex-start'
                             }}
                         >
                             <Text style={{ color: '#ffffff', fontSize: 16 }}>{ message.content }</Text>
@@ -200,8 +194,20 @@ const ChatConversation = ({ route, navigation }) => {
                 flexDirection: 'row',
                 alignItems: 'center'
             }}>
-                <TextInput style={{ flex: 1, fontSize: 16 }} placeholder='Send a message' />
-                <TouchableOpacity>
+                <TextInput
+                    onChangeText={(text) => setMessage(text)}
+                    value={ message }
+                    onSubmitEditing={() => onSubmit()}
+                    style={{ flex: 1, fontSize: 16 }}
+                    placeholder='Send a message'
+                />
+                <TouchableOpacity onPress={() => onSelectFile()} style={{ marginRight: 8 }}>
+                    <Svg viewBox='0 0 24 24' style={{ height: 26, width: 26 }}>
+                        <Path fill='#08d9d6' d='M21,10V4c0-1.1-0.9-2-2-2H3C1.9,2,1.01,2.9,1.01,4L1,16c0,1.1,0.9,2,2,2h11v-5c0-1.66,1.34-3,3-3H21z M11,11L3,6V4l8,5 l8-5v2L11,11z' />
+                        <Path fill='#08d9d6' d='M21,14v4c0,1.1-0.9,2-2,2s-2-0.9-2-2v-4.5c0-0.28,0.22-0.5,0.5-0.5s0.5,0.22,0.5,0.5V18h2v-4.5c0-1.38-1.12-2.5-2.5-2.5 S15,12.12,15,13.5V18c0,2.21,1.79,4,4,4s4-1.79,4-4v-4H21z' />
+                    </Svg>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => onSubmit()}>
                     <Svg viewBox='0 0 24 24' style={{ height: 26, width: 26 }}>
                         <Path fill='#08d9d6' d='M2.01 21L23 12 2.01 3 2 10l15 2-15 2z' />
                     </Svg>

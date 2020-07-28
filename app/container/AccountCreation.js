@@ -7,11 +7,15 @@ import {
     TextInput,
     TouchableOpacity,
     Image,
-    StatusBar
+    StatusBar,
+    Picker,
+    Alert
 } from 'react-native';
 
 import { Svg, Path, Defs, RadialGradient, Ellipse, Stop } from 'react-native-svg';
 import { RNCamera } from 'react-native-camera';
+
+import { createAccount } from '../api.js';
 
 import Button from '../element/Button.js';
 
@@ -49,6 +53,34 @@ const ImageOverlay = () => {
 const AccountCreation = ({ navigation }) => {
     const [ takingPicture, setTakingPicture ] = useState(false);
     const [ picture, setPicture ] = useState(null);
+    const [ name, setName ] = useState('');
+    const [ email, setEmail ] = useState('');
+    const [ phone, setPhone ] = useState('');
+    const [ gender, setGender ] = useState(null);
+    const [ month, setMonth ] = useState('');
+    const [ day, setDay ] = useState('');
+    const [ year, setYear ] = useState('');
+    const [ pass, setPass ] = useState('');
+    const [ confirmPass, setConfirmPass ] = useState('');
+
+    const onCreateAccount = async () => {
+        if (pass !== confirmPass) {
+            Alert.alert('Account Creation', 'Passwords do not match');
+            return;
+        }
+        let dob = Math.floor(new Date(`${month}/${day}/${year}`).getTime());
+        let res = await createAccount(
+            picture,
+            name,
+            email,
+            phone,
+            gender,
+            dob,
+            pass
+        );
+        if (res === 'Success')
+            navigation.navigate('MainScreen');
+    }
 
     const takePicture = async (camera) => {
         if (!takingPicture) {
@@ -163,6 +195,8 @@ const AccountCreation = ({ navigation }) => {
                             textContentType='name'
                             style={ styles.formText }
                             placeholder='Ashley Yeon'
+                            value={ name }
+                            onChangeText={(text) => setName(text)}
                         />
                         <Svg viewBox='0 0 24 24' style={{ height: 20, width: 20 }}>
                             <Path fill='#08d9d6' d='M12 5.9c1.16 0 2.1.94 2.1 2.1s-.94 2.1-2.1 2.1S9.9 9.16 9.9 8s.94-2.1 2.1-2.1m0 9c2.97 0 6.1 1.46 6.1 2.1v1.1H5.9V17c0-.64 3.13-2.1 6.1-2.1M12 4C9.79 4 8 5.79 8 8s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 9c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z' />
@@ -176,6 +210,8 @@ const AccountCreation = ({ navigation }) => {
                             textContentType='emailAddress'
                             style={ styles.formText }
                             placeholder='ashley.yeon@____.com'
+                            value={ email }
+                            onChangeText={(text) => setEmail(text)}
                         />
                         <Svg viewBox='0 0 24 24' style={{ height: 20, width: 20 }}>
                             <Path fill='#08d9d6' d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z' />
@@ -190,10 +226,73 @@ const AccountCreation = ({ navigation }) => {
                             textContentType='telephoneNumber'
                             style={ styles.formText }
                             placeholder='(818) 486-____'
+                            value={ phone }
+                            onChangeText={(text) => setPhone(text)}
                         />
                         <Svg viewBox='0 0 24 24' style={{ height: 20, width: 20 }}>
                             <Path fill='#08d9d6' d='M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z' />
                         </Svg>
+                    </View>
+
+                    <Text style={ styles.formTitle }>GENDER</Text>
+                    <View style={{ ...styles.formTextContainer, justifyContent: 'space-around' }}>
+                        <TouchableOpacity
+                            onPress={() => setGender('male')}
+                        >
+                            <Text
+                                style={{ color: gender === 'male' ? '#08d9d6' : '#c7c7cd', fontWeight: 'bold' }}
+                            >
+                                MALE
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => setGender('female')}
+                        >
+                            <Text
+                                style={{ color: gender === 'female' ? '#08d9d6' : '#c7c7cd', fontWeight: 'bold' }}
+                            >
+                                FEMALE
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => setGender('other')}
+                        >
+                            <Text
+                                style={{ color: gender === 'other' ? '#08d9d6' : '#c7c7cd', fontWeight: 'bold' }}
+                            >
+                                OTHER
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <Text style={ styles.formTitle }>DATE OF BIRTH (MM/DD/YYYY)</Text>
+                    <View style={ styles.formTextContainer }>
+                        <TextInput
+                            maxLength={ 2 }
+                            keyboardType='number-pad'
+                            style={ styles.formText }
+                            placeholder='7'
+                            value={ month }
+                            onChangeText={(text) => setMonth(text)}
+                        />
+                        <Text>/</Text>
+                        <TextInput
+                            maxLength={ 2 }
+                            keyboardType='number-pad'
+                            style={ styles.formText }
+                            placeholder='28'
+                            value={ day }
+                            onChangeText={(text) => setDay(text)}
+                        />
+                        <Text>/</Text>
+                        <TextInput
+                            maxLength={ 4 }
+                            keyboardType='number-pad'
+                            style={ styles.formText }
+                            placeholder='1993'
+                            value={ year }
+                            onChangeText={(text) => setYear(text)}
+                        />
                     </View>
 
                     <Text style={ styles.formTitle }>PASSWORD</Text>
@@ -203,6 +302,8 @@ const AccountCreation = ({ navigation }) => {
                             secureTextEntry={ true }
                             style={ styles.formText }
                             placeholder='••••••••••'
+                            value={ pass }
+                            onChangeText={(text) => setPass(text)}
                         />
                         <Svg viewBox='0 0 24 24' style={{ height: 20, width: 20 }}>
                             <Path fill='#08d9d6' d='M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z' />
@@ -216,13 +317,15 @@ const AccountCreation = ({ navigation }) => {
                             secureTextEntry={ true }
                             style={ styles.formText }
                             placeholder='••••••••••'
+                            value={ confirmPass }
+                            onChangeText={(text) => setConfirmPass(text)}
                         />
                         <Svg viewBox='0 0 24 24' style={{ height: 20, width: 20 }}>
                             <Path fill='#08d9d6' d='M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z' />
                         </Svg>
                     </View>
 
-                    <Button title='Create Account' />
+                    <Button onPress={() => onCreateAccount()} title='Create Account' />
                 </View>
             </ScrollView>
         </View>
