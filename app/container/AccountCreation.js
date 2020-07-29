@@ -68,7 +68,9 @@ const AccountCreation = ({ navigation }) => {
             Alert.alert('Account Creation', 'Passwords do not match');
             return;
         }
-        let dob = Math.floor(new Date(`${month}/${day}/${year}`).getTime());
+        let dob = undefined;
+        if (month && day && year)
+            dob = Math.floor(new Date(`${month}/${day}/${year}`).getTime());
         let res = await createAccount(
             picture,
             name,
@@ -80,6 +82,8 @@ const AccountCreation = ({ navigation }) => {
         );
         if (res === 'Success')
             navigation.navigate('MainScreen');
+        else
+            Alert.alert('Account Creation', res)
     }
 
     const takePicture = async (camera) => {

@@ -78,53 +78,227 @@ const SAMPLE_ID = 3;
 const SAMPLE_EMAIL = 'test@mail.com';
 const SAMPLE_PASS = 'pass';
 
+const SERVER = 'https://fortem.piyo.cafe/';
 var AUTH_TOKEN = undefined;
 var ID = undefined;
 
 const login = async (email, pass) => {
-    console.log('Logging in with: ' + email);
-    if (email === SAMPLE_EMAIL && pass === SAMPLE_PASS)
+    console.log('Logging in');
+
+    if (!email) return 'Missing email';
+    if (!pass) return 'Missing password';
+
+    let res = await fetch(SERVER + 'userLogin', {
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            email,
+            password: pass
+        })
+    });
+    if (res.status === 200) {
+        let json = await res.json();
+        AUTH_TOKEN = json.authToken;
+        ID = json.id;
         return 'Success';
-    return 'Incorrect email or password';
+    }
+    else {
+        return await res.text();
+    }
 }
 
 const logout = async () => {
     return true;
 }
 
-const sendMessage = async (message) => {
-    console.log('Sending: ' + message);
+const sendMessage = async (id, message) => {
+    console.log('Sending message');
+
+    if (!id)
+        return 'Missing id';
+    if (!message)
+        return 'Missing message';
+
+    let res = await fetch(SERVER + 'sendMessage', {
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + AUTH_TOKEN
+        },
+        body: JSON.stringify({
+            content: message,
+            receiver: id
+        })
+    });
+    if (res.status === 200) {
+        return 'Success';
+    }
+    else {
+        return await res.text();
+    }
 }
 
 const sendFile = async (file) => {
-    console.log('Sending: ' + file)
+    console.log('Sending file')
 }
 
 const getConversations = async () => {
-    return [ 1, 2 ];
+    let res = await fetch(SERVER + 'getConversations', {
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + AUTH_TOKEN
+        }
+    });
+    if (res.status === 200) {
+        return await res.json();
+    }
+    else {
+        return await res.text();
+    }
 }
 
 const getMessages = async (id) => {
-    return SAMPLE_MESSAGES[id];
+    if (!id)
+        return 'Missing id';
+
+    let res = await fetch(SERVER + 'getMessages', {
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + AUTH_TOKEN
+        },
+        body: JSON.stringify({
+            participant: id
+        })
+    });
+    if (res.status === 200) {
+        let messages = await res.json();
+        return messages;
+    }
+    else {
+        return await res.text();
+    }
 }
 
 const getDoctor = async (id) => {
-    return SAMPLE_DOCTORS[id];
+    if (!id)
+        return 'Missing id';
+
+    let res = await fetch(SERVER + 'getDoctor', {
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + AUTH_TOKEN
+        },
+        body: JSON.stringify({
+            id
+        })
+    });
+    if (res.status === 200) {
+        return await res.json();
+    }
+    else {
+        return await res.text();
+    }
 }
 
 const getNearby = async (latitude, longitude) => {
-    return [ 1, 4, 5 ];
+    if (!latitude)
+        return 'Missing latitude';
+    if (!longitude)
+        return 'Missing longitude';
+
+    let res = await fetch(SERVER + 'getDoctorsNearMe', {
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + AUTH_TOKEN
+        },
+        body: JSON.stringify({
+            latitude, longitude,
+            distance: 10
+        })
+    });
+    if (res.status === 200) {
+        return await res.json();
+    }
+    else {
+        return await res.text();
+    }
 }
 
 const createAccount = async (picture, name, email, phone, gender, dob, pass) => {
-    console.log('Creating a new account: ');
-    console.log(picture, name, email, phone, gender, dob, pass);
-    return 'Success';
+    console.log('Creating a new account');
+
+    if (!picture) return 'Missing profile picture';
+    if (!name) return 'Missing name';
+    if (!email) return 'Missing email';
+    if (!phone) return 'Missing phone number';
+    if (!gender) return 'Missing gender';
+    if (!dob) return 'Missing date of birth';
+    if (!pass) return 'Missing password';
+
+    let res = await fetch(SERVER + 'addAccount', {
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            name,
+            email,
+            phone,
+            password: pass,
+            gender,
+            dob,
+            profile: picture
+        })
+    });
+    if (res.status === 200) {
+        let json = await res.json();
+        AUTH_TOKEN = json.authToken;
+        ID = json.id;
+        return 'Success';
+    }
+    else {
+        return await res.text();
+    }
+}
+
+const setAsRead = async (id) => {
+    if (!id) return 'Missing id';
+
+    let res = await fetch(SERVER + 'setAsRead', {
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + AUTH_TOKEN
+        },
+        body: JSON.stringify({
+            participant: id
+        })
+    });
+    if (res.status === 200) {
+        return 'Success';
+    }
+    else {
+        return await res.text();
+    }
 }
 
 // NOT AN API CALL
 const getID = () => {
-    return SAMPLE_ID;
+    return ID;
 }
 
 export {
@@ -137,5 +311,6 @@ export {
     getDoctor,
     getNearby,
     createAccount,
+    setAsRead,
     getID
 };

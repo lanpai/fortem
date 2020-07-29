@@ -7,7 +7,8 @@ import {
     ScrollView,
     Dimensions,
     TextInput,
-    StyleSheet
+    StyleSheet,
+    Image
 } from 'react-native';
 
 import { Svg, Path, Polygon } from 'react-native-svg';
@@ -204,14 +205,21 @@ const NearbyOption = ({ info, onGoTo, onPress }) => {
                 }}
                 onPress={() => onPress(info)}
             >
-                <Svg viewBox='0 0 24 24' style={{ height: 60, width: 60, marginRight: 5 }}>
-                    <Path fill='#08d9d6' d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z' />
-                </Svg>
+                <Image
+                    style={{
+                        aspectRatio: 1,
+                        height: 55,
+                        width: 55,
+                        marginRight: 10,
+                        borderRadius: 30
+                    }}
+                    source={{ uri: 'data:image/jpeg;base64,' + info.profile, isStatic: true }}
+                />
                 <View>
                     <Text style={{ color: '#252a34', fontSize: 17, fontWeight: 'bold' }}>
                         { info.name }
                     </Text>
-                    <Text style={{ color: '#252a34', fontSize: 13 }}>{ info.practice }</Text>
+                    <Text style={{ color: '#252a34', fontSize: 13 }}>{ info.jobTitle }</Text>
                 </View>
             </TouchableOpacity>
             <TouchableOpacity onPress={ () => onGoTo && onGoTo() }>
@@ -249,9 +257,11 @@ const Map = ({ route }) => {
 
                     const fetch = async () => {
                         let nearby = await getNearby(info.coords.latitude, info.coords.longitude);
-                        setDoctors(await Promise.all(nearby.map(async (id) => {
-                            return await getDoctor(id);
-                        })));
+                        let newDoctors = await Promise.all(nearby.map(async (info) => {
+                            return await getDoctor(info.id);
+                        }));
+                        setDoctors(newDoctors);
+
                     }
                     fetch();
                 }, (err) => {

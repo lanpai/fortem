@@ -6,18 +6,21 @@ import {
     Text,
     TouchableOpacity,
     TextInput,
-    Alert
+    Alert,
+    Image
 } from 'react-native';
 
 import { createStackNavigator } from '@react-navigation/stack';
 import { Svg, Path } from 'react-native-svg';
 import DocumentPicker from 'react-native-document-picker';
 
-import { getConversations, getDoctor, getMessages, sendMessage, sendFile, getID } from '../api.js';
+import { getConversations, getDoctor, getMessages, sendMessage, sendFile, getID, setAsRead } from '../api.js';
 
 const Stack = createStackNavigator();
 
 const ChatOption = ({ info, navigation }) => {
+    const date = new Date(info.messages[0].timestamp * 1000)
+
     return (
         <TouchableOpacity
             style={{
@@ -39,21 +42,33 @@ const ChatOption = ({ info, navigation }) => {
                     flexDirection: 'row'
                 }}
             >
-                <Svg viewBox='0 0 24 24' style={{ height: 60, width: 60, marginRight: 5 }}>
-                    <Path fill='#08d9d6' d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z' />
-                </Svg>
+                <Image
+                    style={{
+                        aspectRatio: 1,
+                        height: 55,
+                        width: 55,
+                        marginRight: 10,
+                        borderRadius: 30
+                    }}
+                    source={{ uri: 'data:image/jpeg;base64,' + info.profile, isStatic: true }}
+                />
                 <View>
                     <Text style={{ color: '#252a34', fontSize: 17, fontWeight: 'bold' }}>
                         { info.name }
                     </Text>
-                    <Text style={{ color: '#252a34', fontSize: 13 }}>{ info.practice }</Text>
-                    <Text style={{ color: '#252a34', fontWeight: info.read ? 'normal' : 'bold' }}>
+                    <Text style={{ color: '#252a34', fontSize: 13 }}>{ info.jobTitle }</Text>
+                    <Text
+                        style={{
+                            color: '#252a34',
+                            fontWeight: info.messages[0].receiver === getID() && !info.messages[0].read ? 'bold' : 'normal'
+                        }}
+                    >
                         { info.messages[0].content }
                     </Text>
                 </View>
             </View>
             <View>
-                <Text style={{ color: '#252a34', fontSize: 13 }}>{ info.messages[0].timestamp }</Text>
+                <Text style={{ color: '#252a34', fontSize: 13 }}>{ date.getMonth() + 1 }/{ date.getDate() }</Text>
             </View>
         </TouchableOpacity>
     );
@@ -72,7 +87,13 @@ const ChatSelect = ({ navigation }) => {
                 };
             })));
         }
+
         fetch();
+        const timer = setInterval(() => {
+            fetch();
+        }, 1000);
+
+        return () => clearInterval(timer);
     }, []);
 
     return (
@@ -102,10 +123,26 @@ const ChatSelect = ({ navigation }) => {
 const ChatConversation = ({ route, navigation }) => {
     const [ message, setMessage ] = useState('');
     const { info } = route.params;
+    const [ messages, setMessages ] = useState([]);
+
+    useEffect(() => {
+        const fetchMessages = async () => {
+            setMessages(await getMessages(info.id));
+        }
+
+        setAsRead(info.id);
+        fetchMessages();
+        const timer = setInterval(fetchMessages, 1000);
+
+        return () => {
+            console.log('cleanup');
+            clearInterval(timer);
+        }
+    }, []);
 
     const onSubmit = async () => {
-        await sendMessage(message);
-        setMessage('');
+        if (await sendMessage(info.id, message) === 'Success')
+            setMessage('');
     }
 
     const onSelectFile = async () => {
@@ -164,7 +201,7 @@ const ChatConversation = ({ route, navigation }) => {
                 ref={ (ref) => { this.scrollView = ref } }
                 onContentSizeChange={ () => this.scrollView.scrollToEnd() }
             >
-                { info.messages.map((message) =>
+                { messages.map((message) =>
                     <View
                         key={ message.id }
                         style={{

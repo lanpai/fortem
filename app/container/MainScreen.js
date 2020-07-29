@@ -14,7 +14,7 @@ import {
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { Svg, Path } from 'react-native-svg';
 
-import { logout } from '../api.js';
+import { logout, sendMessage } from '../api.js';
 
 import Button from '../element/Button.js';
 import Chat from './Chat.js';
@@ -51,6 +51,12 @@ const MainScreen = ({ navigation }) => {
     const [ infoHeight ] = useState(new Animated.Value(0));
     const [ info, setInfo ] = useState({});
     const [ modalState, setModalState ] = useState('info');
+    const [ message, setMessage ] = useState('');
+
+    const onSubmit = async () => {
+        if (await sendMessage(info.id, message) === 'Success')
+            setMessage('');
+    }
 
     const open = (info) => {
         Animated.timing(infoHeight, {
@@ -174,8 +180,8 @@ const MainScreen = ({ navigation }) => {
                                 </TouchableOpacity>
                                 <View>
                                     <Text style={{ fontSize: 24, fontWeight: 'bold' }}>{ info.name }</Text>
-                                    <Text>{ info.practice }</Text>
-                                    <Text style={{ fontWeight: 'bold' }}>{ info.available ? 'Available' : 'Not Available' }</Text>
+                                    <Text>{ info.jobTitle }</Text>
+                                    <Text style={{ fontWeight: 'bold' }}>{ info.isAvailable ? 'Available' : 'Not Available' }</Text>
                                     <Text>{ info.description }</Text>
                                 </View>
                                 <View style={{
@@ -186,8 +192,8 @@ const MainScreen = ({ navigation }) => {
                                     flexDirection: 'row',
                                     alignItems: 'center'
                                 }}>
-                                    <TextInput style={{ flex: 1, fontSize: 16 }} placeholder='Send a message' />
-                                    <TouchableOpacity>
+                                    <TextInput style={{ flex: 1, fontSize: 16 }} value={ message } onChangeText={(text) => setMessage(text)} placeholder='Send a message' />
+                                    <TouchableOpacity onPress={() => onSubmit()}>
                                         <Svg viewBox='0 0 24 24' style={{ height: 26, width: 26 }}>
                                             <Path fill='#08d9d6' d='M2.01 21L23 12 2.01 3 2 10l15 2-15 2z' />
                                         </Svg>
