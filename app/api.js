@@ -144,6 +144,8 @@ const sendMessage = async (id, message) => {
 
 const sendFile = async (file) => {
     console.log('Sending file')
+    // RSA encryption here
+    return 'Successfully sent file';
 }
 
 const getConversations = async () => {

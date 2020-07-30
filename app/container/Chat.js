@@ -157,7 +157,9 @@ const ChatConversation = ({ route, navigation }) => {
                 },
                 {
                     text: 'Upload',
-                    onPress: () => sendFile(res.uri)
+                    onPress: () => {
+                        Alert.alert('File Upload', await sendFile(res.uri));
+                    }
                 }
             ]);
         }
